@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YapChat — Browse</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <span class="navbar-brand">YapChat</span>
+    <div class="navbar-links">
+      <span style="color:var(--muted);font-size:.875rem;">@{{ current_user }}</span>
+      <a href="/settings" class="btn btn-secondary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+        <!--Settings -->
+      </a>
+    </div>
+  </nav>
+
+  <div class="browse-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h3>Browse</h3>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search users…">
+
+      {% if incoming_requests %}
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;">
+          <h3 style="font-size:.875rem;">Message Requests</h3>
+          <span class="request-badge">{{ incoming_requests|length }}</span>
+        </div>
+        <div class="incoming-list">
+          {% for requester in incoming_requests %}
+          <div class="incoming-item">
+            <span>@{{ requester }}</span>
+            <div style="display:flex;gap:.4rem;">
+              <a href="/accept-chat/{{ requester }}" class="btn btn-primary btn-sm">Accept</a> <!-- Accept chat request -->
+              <a href="/deny-chat/{{ requester }}"   class="btn btn-danger btn-sm">Deny</a>   <!-- Deny chat request -->
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div style="margin-top:auto;">
+        <p style="font-size:.8rem;">
+          {{ online_count }} user{{ 's' if online_count != 1 else '' }} online    <!--shows if user is online-->
+        </p>
+      </div>
+    </aside>
+
+    <!-- Main grid -->
+    <main class="main-content">
+      <h2 class="anim">Discover people</h2>
+      <p class="anim anim-d1" style="margin-top:.35rem;font-size:.925rem;">Find someone interesting and send a message request.</p>
+
+      {% if users %}
+      <div class="user-grid" id="userGrid">
+        {% for user in users %}
+        <div class="user-card anim" data-name="{{ user.username }}" data-tags="{{ user.tags|join(' ') }}">
+          <div style="display:flex;align-items:center;gap:.75rem;">
+            <div class="user-avatar">{{ user.username[0].upper() }}</div>
+            <div>
+              <a href="/profile/{{ user.username }}" class="user-name">@{{ user.username }}</a> <!--Usernames function as clickable links that transfer you to their profile page-->
+            </div>
+          </div>
+          {% if user.bio %}
+          <p class="user-bio">{{ user.bio }}</p>
+          {% else %}
+          <p class="user-bio" style="font-style:italic;">No bio yet.</p>
+          {% endif %}
+          {% if user.tags %}
+          <div class="tags">
+            {% for tag in user.tags %}
+            <span class="tag">{{ tag }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% if user.connected %}
+            <!-- Already connected — show Open Chat and Remove buttons -->
+            <div style="display:flex;gap:.5rem;margin-top:.25rem;">
+              <a href="/messaging/{{ user.username }}" class="btn btn-secondary btn-sm">Open Chat</a>
+              <a href="/remove-user/{{ user.username }}"
+                 class="btn btn-danger btn-sm"
+                 onclick="return confirm('Remove @{{ user.username }}? You will no longer be connected.')">
+                Remove
+              </a>
+            </div>
+          {% else %}
+            <!-- Not connected — show Request to Chat button -->
+            <a href="/request-chat/{{ user.username }}" class="btn btn-primary btn-sm" style="margin-top:.25rem;">
+              Request to Chat
+            </a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="margin-top:3rem;text-align:center;opacity:.5;">
+        <p>No other users yet. Share the link so friends can join!</p>
+      </div>
+      {% endif %}
+    </main>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const cards = document.querySelectorAll('.user-card');
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase().trim();
+      cards.forEach(card => {
+        const name = card.dataset.name.toLowerCase();
+        const tags = (card.dataset.tags || '').toLowerCase();
+        card.style.display = (!q || name.includes(q) || tags.includes(q)) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

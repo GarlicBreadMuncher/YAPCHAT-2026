@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YapChat — Settings</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .danger-zone {
+      border: 1px solid rgba(248,113,113,.25);
+      border-radius: var(--radius); padding: 1.5rem;
+      background: rgba(248,113,113,.04);
+    }
+    .danger-zone h3 { color: var(--error); }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <span class="navbar-brand">YapChat</span>
+    <div class="navbar-links">
+      <a href="/browse" class="btn btn-secondary btn-sm">← Browse</a>
+    </div>
+  </nav>
+
+  <div class="settings-layout">
+    <div style="margin-bottom:2rem;" class="anim">
+      <h2>Settings</h2>
+      <p style="margin-top:.35rem;">Manage your account, profile, and preferences.</p>
+    </div>
+
+    {% if success %}
+    <div class="alert alert-success anim">{{ success }}</div>
+    {% endif %}
+
+    <!-- Profile section -->
+    <div class="card anim anim-d1">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.5rem;">
+        <div class="user-avatar" style="width:56px;height:56px;font-size:1.3rem;">
+          {{ current_user[0].upper() }}
+        </div>
+        <div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:1.15rem;">@{{ current_user }}</div>
+          <div style="font-size:.8rem;color:var(--muted);">Member</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <form method="POST" action="/settings">
+        <input type="hidden" name="action" value="update">
+        <div class="settings-section">
+          <div class="field">
+            <label>Bio</label>
+            <textarea name="bio" placeholder="Tell people about yourself…">{{ user.bio }}</textarea>
+          </div>
+          <div class="field">
+            <label>Interests / Tags <span style="color:var(--muted);font-size:.75em;text-transform:none;letter-spacing:0">(comma-separated)</span></label>
+            <input type="text" name="tags" value="{{ user.tags|join(', ') }}" placeholder="music, art, coding…">
+          </div>
+          <div class="field">
+            <label>New Password <span style="color:var(--muted);font-size:.75em;text-transform:none;letter-spacing:0">(leave blank to keep current)</span></label>
+            <input type="password" name="new_password" placeholder="••••••••">
+          </div>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Log out -->
+    <div class="card anim anim-d2" style="margin-top:1.25rem;">
+      <h3>Session</h3>
+      <p style="margin:.4rem 0 1rem;font-size:.9rem;">You are logged in as @{{ current_user }}.</p>
+      <form method="POST" action="/settings">
+        <input type="hidden" name="action" value="logout">
+        <button type="submit" class="btn btn-secondary">Log Out</button>
+      </form>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="danger-zone anim anim-d3" style="margin-top:1.25rem;">
+      <h3 style="margin-bottom:.5rem;">Danger Zone</h3>
+      <p style="font-size:.875rem;margin-bottom:1rem;">Permanently delete your account and all associated data. This cannot be undone.</p>
+      <form method="POST" action="/settings"
+        onsubmit="return confirm('Are you sure? This will permanently delete your account.');">
+        <input type="hidden" name="action" value="delete">
+        <button type="submit" class="btn btn-danger">Delete Account</button>
+      </form>
+    </div>
+
+  </div>
+</body>
+</html>

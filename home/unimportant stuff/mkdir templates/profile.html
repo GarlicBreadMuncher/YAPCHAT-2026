@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>@{{ user.username }} — YapChat</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <span class="navbar-brand">YapChat</span>
+    <div class="navbar-links">
+      <a href="/browse" class="btn btn-secondary btn-sm">← Browse</a>     <!-- Return to browse -->
+    </div>
+  </nav>
+
+  <div class="settings-layout">
+    <div class="card">
+      <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+        <div class="user-avatar">{{ user.username[0].upper() }}</div>
+        <div>
+          <div class="user-name">@{{ user.username }}</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label>Bio</label>
+        <p>{{ user.bio if user.bio else 'No bio yet.' }}</p>
+      </div>
+
+      <div class="field" style="margin-top:1rem;">
+        <label>Interests</label>
+        <div class="tags">
+          {% if user.tags %}
+            {% for tag in user.tags %}
+            <span class="tag">{{ tag }}</span>
+            {% endfor %}
+          {% else %}
+            <p>No tags yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if user.username != current_user %}
+      <div style="margin-top:1.5rem;">
+        <a href="/request-chat/{{ user.username }}" class="btn btn-primary">    <!-- users can send requests by clicking the button-->
+          Request to Chat
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

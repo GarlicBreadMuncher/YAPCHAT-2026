@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <title>Messaging Site</title>
+<!-- hello --> 
+
+    <link rel='stylesheet' type='text/css' href='/css/style.css'> <!-- retrieves style from stylesheet-->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js" integrity="sha512-8BHxHDLsOHx+flIrQ0DrZcea7MkHqRU5GbTHmbdzMRnAaoCIkZ97PqZcXJkKZckMMhqfoeaJE+DNUVuyoQsO3Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- script that manages sending/recieving data between client and server-->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- updates UI when data is recieved. Ensures page updates when messages are sent-->
+
+
+</head>
+
+<body>
+
+    <h1>Welcome to Yapchat!</h1>         
+
+
+                    <!-- change this to http://(IP Address):5000-->
+<script type="text/javascript">
+    $(document).ready(function(){
+        var socket = io.connect("http://localhost:5000") 
+        socket.on('connect',function() {
+            socket.send("User connected!");
+        });
+
+        socket.on('message', function(data) {
+            $('#messages').append($('<p>').text(data));
+        });
+
+        $('#sendBtn').on('click', function () {
+            socket.send($('#username').val() + ': ' + $('#message').val());
+            $('#message').val('');
+        });
+    });  
+</script>
+
+<div id="messages">
+
+</div>
+
+<input type="text" id="username" placeholder="Username">
+<input type="text" id="message" placeholder="Message">
+<button id="sendBtn">Send</button>
+</body>
+
+</html>
