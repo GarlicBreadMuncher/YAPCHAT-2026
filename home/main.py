@@ -367,18 +367,12 @@ def remove_user(partner):
 @login_required
 def messaging(partner):
 
-                            #Displays the private chat page (messaging.html) between the logged-in user and <partner>.
-                            #Loads the full message history for this room from the database so previous messages appear when the page loads.
-                            #Messages are ordered oldest-first (ASC) so the chat reads top to bottom.
-                            #Now checks the connections table to verify the two users are connected before allowing access.
-                            #Redirects to browse if <partner> does not exist or if the two users are not connected.
-
-    me     = session['username']
-    room   = get_room_id(me, partner)  #consistent room key for this pair of users
+    me = session['username']
+    room = get_room_id(me, partner)
     user1, user2 = sorted([me, partner])
 
     with get_db() as conn:
-                            #Checks that the partner is a real registered user
+
         partner_exists = conn.execute(
             'SELECT username FROM users WHERE username = ?', (partner,)
         ).fetchone()
@@ -386,7 +380,6 @@ def messaging(partner):
         if not partner_exists:
             return redirect(url_for('browse'))
 
-                            #Check a connection exists between these two users
         connected = conn.execute(
             'SELECT * FROM connections WHERE user1 = ? AND user2 = ?',
             (user1, user2)
@@ -395,18 +388,28 @@ def messaging(partner):
         if not connected:
             return redirect(url_for('browse'))
 
-                            #Loads all past messages for this room. Oldest to newest
+        # Load encrypted messages
         history = conn.execute(
             'SELECT sender, text FROM messages WHERE room = ? ORDER BY timestamp ASC',
             (room,)
         ).fetchall()
 
+    # Decrypt messages
+    history = [
+        {
+            'sender': r['sender'],
+            'text': fernet.decrypt(r['text'].encode()).decode()
+        }
+        for r in history
+    ]
 
-                            #Convert to plain dicts for the template
-    history = [{'sender': r['sender'], 'text': r['text']} for r in history]
-
-    return render_template('messaging.html', current_user=me,
-                           partner=partner, room=room, history=history)
+    return render_template(
+        'messaging.html',
+        current_user=me,
+        partner=partner,
+        room=room,
+        history=history
+    )
 
 
 @app.route('/settings', methods=['GET', 'POST'])
@@ -503,13 +506,27 @@ def handle_message(data):
     sender = data['sender']
     text   = data['text']
 
-    # Encrypt the message before storing
+    #Encrypt the message before storing
     encrypted_text = fernet.encrypt(text.encode()).decode()
 
     with get_db() as conn:
-        conn.execute(_SQL_INSERT_MSG, (room, sender, encrypted_text))
+        conn.execute(
+            '''
+            INSERT INTO messages (room, sender, text)
+            VALUES (?, ?, ?)
+            ''',
+            (room, sender, encrypted_text)
+        )
 
-    emit('message', {'sender': sender, 'text': text}, to=room)
+    #Send the plaintext message to everyone currently in the room
+    emit(
+        'message',
+        {
+            'sender': sender,
+            'text': text
+        },
+        to=room
+    )
 
 
 if __name__ == '__main__':
