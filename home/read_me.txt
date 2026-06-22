@@ -16,4 +16,4 @@ print(Fernet.generate_key())
 Then copy and paste the outputted key into (generated encryption key)
 
 
-IN MAIN.PY host= YOUR IPV4 ADDRESS. (IN CMD PROMT TYPE "ipconfig" replace, COPY AND PASTE YOUR IPV4 INTO THE host
+IN MAIN.PY host= YOUR IPV4 ADDRESS. (IN CMD PROMT TYPE "ipconfig" replace, COPY AND PASTE YOUR IPV4 INTO THE host)

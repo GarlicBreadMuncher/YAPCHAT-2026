@@ -366,6 +366,12 @@ def remove_user(partner):
 @app.route('/messaging/<partner>')
 @login_required
 def messaging(partner):
+                #Displays the private chat page (messaging.html) between the logged-in user and <partner>.
+                #Loads the full message history for this room from the database so previous messages appear when the page loads.
+                #Messages are ordered oldest-first (ASC) so the chat reads top to bottom.
+                #Now checks the connections table to verify the two users are connected before allowing access.
+                #Redirects to browse if <partner> does not exist or if the two users are not connected.
+
 
     me = session['username']
     room = get_room_id(me, partner)
@@ -388,13 +394,13 @@ def messaging(partner):
         if not connected:
             return redirect(url_for('browse'))
 
-        # Load encrypted messages
+        #Load encrypted messages
         history = conn.execute(
             'SELECT sender, text FROM messages WHERE room = ? ORDER BY timestamp ASC',
             (room,)
         ).fetchall()
 
-    # Decrypt messages
+    #Decrypt messages
     history = [
         {
             'sender': r['sender'],
