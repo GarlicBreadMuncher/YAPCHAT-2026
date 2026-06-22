@@ -1,3 +1,5 @@
+!!!updated files located in 'home' folder!!! (If reading from Github. Otherwise ignore)
+
 INSTALL FLASK: type "pip install flask" into the Pycharm (or other IDE terminal)
 
 INSTALL CRYPTOGRAPHY: type "pip install cryptography" into terminal
