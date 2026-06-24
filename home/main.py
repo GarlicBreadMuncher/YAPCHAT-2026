@@ -4,14 +4,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
 from cryptography.fernet import Fernet
+import secrets
 
 # Generate once and hardcode the result — if you lose this key
 # all messages become permanently unreadable
 ENCRYPTION_KEY = b'XHhnc_KrXpXi0AaZ8E87yjJ--ZJp1adMd34A7UmGHJs='
 fernet = Fernet(ENCRYPTION_KEY)
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'secret!123') #to cryptographically sign data. This prevents attackers from tampering with sensitive information.
+app = Flask(__name__)                                               #secrets.token_hex(16) generates a completely random new hex string (16 bytes, 32 characters long) every time the server restarts. This also forcibly logs out users every time the server restarts, maximising security
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16)) #function to cryptographically sign flask session cookies. This prevents attackers from tampering with sensitive information.
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 DATABASE = 'app.db'  # name of the SQLite database file stored on disk
@@ -250,7 +251,8 @@ def browse():
                            current_user=me, incoming_requests=incoming_requests,
                            online_count=len(online_users))                          #displays how many users online/logged in currently.
 
-@app.route('/profile/<username>') #____________________PROFILE_PAGE________________________
+#____________________PROFILE_PAGE________________________
+@app.route('/profile/<username>')
 @login_required
 def profile(username):
     
@@ -274,7 +276,8 @@ def profile(username):
     return render_template('profile.html', user=user_data,
                            current_user=session['username'])
 
-@app.route('/request-chat/<target>')#_______________________REQUEST_CHAT________________________________
+#_______________________REQUEST_CHAT________________________________
+@app.route('/request-chat/<target>')
 @login_required
 def request_chat(target):
 
@@ -362,7 +365,7 @@ def remove_user(partner):
         )
     return redirect(url_for('browse'))
 
-
+#_______________________MESSAGING FUNCTION_______________________
 @app.route('/messaging/<partner>')
 @login_required
 def messaging(partner):
@@ -380,27 +383,27 @@ def messaging(partner):
     with get_db() as conn:
 
         partner_exists = conn.execute(
-            'SELECT username FROM users WHERE username = ?', (partner,)
+            'SELECT username FROM users WHERE username = ?', (partner,)     #gets username from database
         ).fetchone()
 
         if not partner_exists:
-            return redirect(url_for('browse'))
+            return redirect(url_for('browse'))          #redirects user to browse page if attempting to message a user who doesnt exist
 
         connected = conn.execute(
-            'SELECT * FROM connections WHERE user1 = ? AND user2 = ?',
+            'SELECT * FROM connections WHERE user1 = ? AND user2 = ?',      #checks if users are connected (message request accepted).
             (user1, user2)
         ).fetchone()
 
         if not connected:
-            return redirect(url_for('browse'))
+            return redirect(url_for('browse'))          #If user attempts to message other user who hasnt accepted their chat request, they will be redirected to the browse page
 
-        #Load encrypted messages
+        #Load encrypted messages, ordering them from oldest to newest
         history = conn.execute(
             'SELECT sender, text FROM messages WHERE room = ? ORDER BY timestamp ASC',
             (room,)
         ).fetchall()
 
-    #Decrypt messages
+    #Decrypt messages function
     history = [
         {
             'sender': r['sender'],
@@ -417,7 +420,7 @@ def messaging(partner):
         history=history
     )
 
-
+#_______________________SETTINGS ROUTE_______________________
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
@@ -534,8 +537,11 @@ def handle_message(data):
         to=room
     )
 
+#_______________________HOSTING SETUP_______________________
 
 if __name__ == '__main__':
+
     #host= YOUR IPV4 ADDRESS. (IN CMD PROMT TYPE "ipconfig" replace, COPY AND PASTE YOUR IPV4 INTO THE host
     #Change to host='localhost' to restrict access to this machine only
+
     socketio.run(app, host='10.0.0.5', port=5000, debug=True)
