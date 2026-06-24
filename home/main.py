@@ -255,17 +255,22 @@ def browse():
 @app.route('/profile/<username>')
 @login_required
 def profile(username):
-    
-    #Displays a user's public profile page.
-    #Shows their username, bio, and tags.
-    
+    me = session['username']
+
     with get_db() as conn:
         user = conn.execute(
-            'SELECT username, bio, tags FROM users WHERE username = ?', (username,)
+            'SELECT username, bio, tags FROM users WHERE username = ?', (username,)     #retrieves user info from database
         ).fetchone()
 
-    if not user:
-        return redirect(url_for('browse'))
+        if not user:
+            return redirect(url_for('browse'))
+
+        # Check if the logged-in user is already connected to this profile's user. If connected, the request to chat button is removed
+        user1, user2 = sorted([me, username])
+        connected = conn.execute(
+            'SELECT 1 FROM connections WHERE user1 = ? AND user2 = ?',
+            (user1, user2)
+        ).fetchone()
 
     user_data = {
         'username': user['username'],
@@ -274,7 +279,8 @@ def profile(username):
     }
 
     return render_template('profile.html', user=user_data,
-                           current_user=session['username'])
+                           current_user=me,
+                           connected=bool(connected))
 
 #_______________________REQUEST_CHAT________________________________
 @app.route('/request-chat/<target>')
@@ -441,9 +447,61 @@ def settings():
         action = request.form.get('action')
 
         if action == 'update':
-            bio          = request.form.get('bio', '').strip()
-            tags         = request.form.get('tags', '').strip()
+            bio = request.form.get('bio', '').strip()               #updates user info
+            tags = request.form.get('tags', '').strip()
             new_password = request.form.get('new_password', '').strip()
+            new_username = request.form.get('new_username', '').strip()
+
+            with get_db() as conn:
+
+                # Handle username change
+                if new_username and new_username != me:
+                    # Check new username isn't already taken
+                    existing = conn.execute(
+                        'SELECT username FROM users WHERE username = ?', (new_username,)
+                    ).fetchone()
+
+                    if existing:
+                        with get_db() as conn2:
+                            user = conn2.execute(
+                                'SELECT * FROM users WHERE username = ?', (me,)
+                            ).fetchone()
+                        return render_template('settings.html', current_user=me,
+                                               user=user, error='Username already taken.')
+
+                    # Update username everywhere it appears across all tables
+                    conn.execute('UPDATE users    SET username=?  WHERE username=?', (new_username, me))
+                    conn.execute('UPDATE messages SET sender=?    WHERE sender=?', (new_username, me))
+                    conn.execute('UPDATE requests SET from_user=? WHERE from_user=?', (new_username, me))
+                    conn.execute('UPDATE requests SET to_user=?   WHERE to_user=?', (new_username, me))
+                    conn.execute('UPDATE connections SET user1=?  WHERE user1=?', (new_username, me))
+                    conn.execute('UPDATE connections SET user2=?  WHERE user2=?', (new_username, me))
+
+                    # Update session and online_users to reflect the new username
+                    online_users.discard(me)
+                    online_users.add(new_username)
+                    session['username'] = new_username
+                    me = new_username  # update local variable for the rest of this request
+
+                # Handle password change
+                if new_password:
+                    conn.execute(
+                        'UPDATE users SET bio=?, tags=?, password_hash=? WHERE username=?',
+                        (bio, tags, generate_password_hash(new_password), me)
+                    )
+                else:
+                    conn.execute(
+                        'UPDATE users SET bio=?, tags=? WHERE username=?',
+                        (bio, tags, me)
+                    )
+
+            with get_db() as conn:
+                user = conn.execute(
+                    'SELECT * FROM users WHERE username = ?', (me,)
+                ).fetchone()
+
+            return render_template('settings.html', current_user=me,
+                                   user=user, success='Account updated!')
 
             with get_db() as conn:
                 if new_password:
@@ -487,6 +545,7 @@ def settings():
             online_users.discard(session['username'])  #removes from online set (less users online)
             session.clear()                            #clears the session (logs out user)
             return redirect(url_for('home'))
+
 
         
 

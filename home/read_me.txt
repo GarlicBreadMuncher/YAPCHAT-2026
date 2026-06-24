@@ -32,3 +32,8 @@ Step 6. Select Allow the connection → click Next
 Step 7. Make sure Private and Public are both ticked → click Next
 Step 8. Give it a name like YapChat → click Finish
 
+
+
+___________small info_____________
+
+- if users wish to make it so the users sessions arent invalidated every time the server restarts, simply change "secrets.token_hex(16)" to a random string (e.g. "ASNJKDn7897823nsi@!@!#38i901890")

@@ -54,6 +54,10 @@
         <input type="hidden" name="action" value="update">
         <div class="settings-section">
           <div class="field">
+              <label>Change Username <span style="color:#999;font-size:.75em;text-transform:none;letter-spacing:0">(leave blank to keep current)</span></label>
+              <input type="text" name="new_username" placeholder="new_username">
+          </div>
+          <div class="field">
             <label>Bio</label>
             <textarea name="bio" placeholder="Tell people about yourself…">{{ user.bio }}</textarea>
           </div>

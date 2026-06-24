@@ -43,13 +43,20 @@
       </div>
 
       {% if user.username != current_user %}
-      <div style="margin-top:1.5rem;">
-        <a href="/request-chat/{{ user.username }}" class="btn btn-primary">    <!-- users can send requests by clicking the button-->
-          Request to Chat
-        </a>
-      </div>
-      {% endif %}
-    </div>
-  </div>
-</body>
-</html>
+<div style="margin-top:1.5rem; display:flex; gap:.5rem;">
+  {% if connected %}
+    <!-- Already connected: show 'Open Chat' and 'remove' buttons -->
+    <a href="/messaging/{{ user.username }}" class="btn btn-secondary">Open Chat</a>
+    <a href="/remove-user/{{ user.username }}"
+       class="btn btn-danger"
+       onclick="return confirm('Remove @{{ user.username }}? You will no longer be connected.')">
+      Remove
+    </a>
+  {% else %}
+    <!-- Not connected: shows 'Request to Chat' button-->
+    <a href="/request-chat/{{ user.username }}" class="btn btn-primary">
+      Request to Chat
+    </a>
+  {% endif %}
+</div>
+{% endif %}
