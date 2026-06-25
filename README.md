@@ -1,4 +1,4 @@
-Actual project files are located in the 'home' folder. This includes the read_me.txt file for the Yapchat prgram.
+Finalised project files are located in the 'home' folder. Ignore other files.
 
 
 
