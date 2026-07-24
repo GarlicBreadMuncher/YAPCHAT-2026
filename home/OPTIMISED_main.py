@@ -1,3 +1,5 @@
+#PLEASE IGNORE THIS. MAIN.PY IS THE ACTUAL CODE
+
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit, join_room
 from werkzeug.security import generate_password_hash, check_password_hash
